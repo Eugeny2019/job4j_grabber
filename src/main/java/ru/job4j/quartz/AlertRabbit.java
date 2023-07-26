@@ -15,7 +15,7 @@ import static org.quartz.JobBuilder.*;
 import static org.quartz.TriggerBuilder.*;
 import static org.quartz.SimpleScheduleBuilder.*;
 
-public class AlertRabbit implements AutoCloseable{
+public class AlertRabbit implements AutoCloseable {
     protected Connection connection;
 
     public static void main(String[] args) {
