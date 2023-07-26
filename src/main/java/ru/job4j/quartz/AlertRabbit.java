@@ -5,40 +5,53 @@ import org.quartz.impl.StdSchedulerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 import static org.quartz.JobBuilder.*;
 import static org.quartz.TriggerBuilder.*;
 import static org.quartz.SimpleScheduleBuilder.*;
 
-public class AlertRabbit {
+public class AlertRabbit implements AutoCloseable{
+    protected Connection connection;
+
     public static void main(String[] args) {
         AlertRabbit alertRabbit = new AlertRabbit();
         int startInterval = Integer.parseInt(alertRabbit.getProperties("rabbit.properties").getProperty("rabbit.interval"));
         try {
+            alertRabbit.connection = alertRabbit.initConnection(alertRabbit.getProperties("rabbit.properties"));
             List<Long> store = new ArrayList<>();
             Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
             scheduler.start();
             JobDataMap data = new JobDataMap();
             data.put("store", store);
+            data.put("connection", alertRabbit.connection);
             JobDetail job = newJob(Rabbit.class)
                     .usingJobData(data)
                     .build();
             SimpleScheduleBuilder times = simpleSchedule()
-                    .withIntervalInSeconds(startInterval-5)
+                    .withIntervalInSeconds(startInterval - 5)
                     .repeatForever();
             Trigger trigger = newTrigger()
                     .startNow()
                     .withSchedule(times)
                     .build();
             scheduler.scheduleJob(job, trigger);
-            Thread.sleep(5000);
+            Thread.sleep(10000);
             scheduler.shutdown();
             System.out.println(store);
         } catch (Exception se) {
             se.printStackTrace();
+        }
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (Objects.nonNull(connection)) {
+            connection.close();
         }
     }
 
@@ -52,6 +65,13 @@ public class AlertRabbit {
             System.out.println("Rabbit runs here ...");
             List<Long> store = (List<Long>) context.getJobDetail().getJobDataMap().get("store");
             store.add(System.currentTimeMillis());
+            Connection connection = (Connection) context.getJobDetail().getJobDataMap().get("connection");
+            try (PreparedStatement statement = connection.prepareStatement("insert into rabbit (created_date) values (?)")) {
+                statement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+                statement.execute();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -63,5 +83,14 @@ public class AlertRabbit {
             throw new RuntimeException(e);
         }
         return properties;
+    }
+
+    private Connection initConnection(Properties properties) throws ClassNotFoundException, SQLException {
+        System.out.println(properties.getProperty("jdbc.driver"));
+        Class.forName(properties.getProperty("jdbc.driver"));
+        String url = properties.getProperty("jdbc.url");
+        String login = properties.getProperty("jdbc.username");
+        String password = properties.getProperty("jdbc.password");
+        return DriverManager.getConnection(url, login, password);
     }
 }
