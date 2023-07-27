@@ -22,7 +22,6 @@ public class HabrCareerParse {
             Connection connection = Jsoup.connect(PAGE_LINK + i);
             getvacantions(connection);
         }
-
     }
 
     public static void getvacantions(Connection connection) throws IOException {

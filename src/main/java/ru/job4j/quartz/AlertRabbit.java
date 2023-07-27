@@ -8,27 +8,24 @@ import java.io.InputStream;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 
 import static org.quartz.JobBuilder.*;
 import static org.quartz.TriggerBuilder.*;
 import static org.quartz.SimpleScheduleBuilder.*;
 
-public class AlertRabbit implements AutoCloseable {
-    protected Connection connection;
+public class AlertRabbit {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         AlertRabbit alertRabbit = new AlertRabbit();
         int startInterval = Integer.parseInt(alertRabbit.getProperties("rabbit.properties").getProperty("rabbit.interval"));
-        try {
-            alertRabbit.connection = alertRabbit.initConnection(alertRabbit.getProperties("rabbit.properties"));
+        try (Connection connection = alertRabbit.initConnection(alertRabbit.getProperties("rabbit.properties"))){
             List<Long> store = new ArrayList<>();
             Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
             scheduler.start();
             JobDataMap data = new JobDataMap();
             data.put("store", store);
-            data.put("connection", alertRabbit.connection);
+            data.put("connection", connection);
             JobDetail job = newJob(Rabbit.class)
                     .usingJobData(data)
                     .build();
@@ -45,13 +42,6 @@ public class AlertRabbit implements AutoCloseable {
             System.out.println(store);
         } catch (Exception se) {
             se.printStackTrace();
-        }
-    }
-
-    @Override
-    public void close() throws Exception {
-        if (Objects.nonNull(connection)) {
-            connection.close();
         }
     }
 
@@ -75,12 +65,10 @@ public class AlertRabbit implements AutoCloseable {
         }
     }
 
-    private Properties getProperties(String resourceFile) {
+    private Properties getProperties(String resourceFile) throws IOException {
         Properties properties = new Properties();
         try (InputStream in = AlertRabbit.class.getClassLoader().getResourceAsStream(resourceFile)) {
             properties.load(in);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
         return properties;
     }
