@@ -19,7 +19,7 @@ public class AlertRabbit {
     public static void main(String[] args) throws IOException {
         AlertRabbit alertRabbit = new AlertRabbit();
         int startInterval = Integer.parseInt(alertRabbit.getProperties("rabbit.properties").getProperty("rabbit.interval"));
-        try (Connection connection = alertRabbit.initConnection(alertRabbit.getProperties("rabbit.properties"))){
+        try (Connection connection = alertRabbit.initConnection(alertRabbit.getProperties("rabbit.properties"))) {
             List<Long> store = new ArrayList<>();
             Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
             scheduler.start();
