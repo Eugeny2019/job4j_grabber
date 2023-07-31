@@ -13,12 +13,13 @@ import java.time.format.DateTimeFormatter;
 
 public class HabrCareerParse {
 
+    private static final int NUMBER_OF_PAGES = 5;
     private static final String SOURCE_LINK = "https://career.habr.com";
 
     private static final String PAGE_LINK = String.format("%s/vacancies/java_developer?page=", SOURCE_LINK);
 
     public static void main(String[] args) throws IOException {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < NUMBER_OF_PAGES; i++) {
             Connection connection = Jsoup.connect(PAGE_LINK + i);
             getVacancies(connection);
         }
