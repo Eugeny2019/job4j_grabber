@@ -34,9 +34,11 @@ public class HabrCareerParse {
             String vacancyName = titleElement.text();
 
             String vacancyDatetime = row.select(".vacancy-card__date time").first().attr("datetime");
+            System.out.println(vacancyDatetime);
             HabrCareerDateTimeParser habrCareerDateTimeParser = new HabrCareerDateTimeParser();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
             vacancyDatetime = habrCareerDateTimeParser.parse(vacancyDatetime).format(formatter);
+            System.out.println("parsed:" + habrCareerDateTimeParser.parse(vacancyDatetime));
 
             String link = String.format("%s%s", SOURCE_LINK, linkElement.attr("href"));
             System.out.printf("%s: %s %s%n", vacancyDatetime, vacancyName, link);
