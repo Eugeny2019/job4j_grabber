@@ -13,19 +13,20 @@ import java.time.format.DateTimeFormatter;
 
 public class HabrCareerParse {
 
-    private static final int NUMBER_OF_PAGES = 5;
+    private static final int NUMBER_OF_PAGES = 1;
     private static final String SOURCE_LINK = "https://career.habr.com";
 
     private static final String PAGE_LINK = String.format("%s/vacancies/java_developer?page=", SOURCE_LINK);
 
     public static void main(String[] args) throws IOException {
+        HabrCareerParse habrCareerParse = new HabrCareerParse();
         for (int i = 0; i < NUMBER_OF_PAGES; i++) {
             Connection connection = Jsoup.connect(PAGE_LINK + i);
-            getVacancies(connection);
+            habrCareerParse.getVacancies(connection);
         }
     }
 
-    public static void getVacancies(Connection connection) throws IOException {
+    public void getVacancies(Connection connection) throws IOException {
         Document document = connection.get();
         Elements rows = document.select(".vacancy-card__inner");
         rows.forEach(row -> {
@@ -39,7 +40,34 @@ public class HabrCareerParse {
             vacancyDatetime = habrCareerDateTimeParser.parse(vacancyDatetime).format(formatter);
 
             String link = String.format("%s%s", SOURCE_LINK, linkElement.attr("href"));
-            System.out.printf("%s: %s %s%n", vacancyDatetime, vacancyName, link);
+
+            String vacancyDescription;
+            vacancyDescription = retrieveDescription(link);
+
+            System.out.printf("%s: %s %s%nDescription:%n%s%n", vacancyDatetime, vacancyName, link, vacancyDescription);
         });
+    }
+
+    private String retrieveDescription(String link) {
+        StringBuilder description = new StringBuilder();
+        Connection connection = Jsoup.connect(link);
+        Document document = null;
+        try {
+            document = connection.get();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Elements sectionRows = document.select(".vacancy-description__text>h3");
+        Elements sectionTextRows = document.select(".vacancy-description__text>div.style-ugc");
+
+        for (int i = 0; i < sectionRows.size(); i++) {
+            description.append(sectionRows.get(i).text());
+            description.append(":");
+            description.append(System.lineSeparator());
+            description.append(sectionTextRows.get(i).wholeText());
+            description.append(":");
+            description.append(System.lineSeparator());
+        }
+        return description.toString();
     }
 }
