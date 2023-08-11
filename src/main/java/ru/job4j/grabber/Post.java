@@ -5,11 +5,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class Post {
-    private int id;
-    private String title;
-    private String link;
-    private String description;
-    private LocalDateTime created;
+    private final int id;
+    private final String title;
+    private final String link;
+    private final String description;
+    private final LocalDateTime created;
 
     public Post(int id, String title, String link, String description, LocalDateTime created) {
         this.id = id;
@@ -39,6 +39,6 @@ public class Post {
     @Override
     public String toString() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
-        return String.format("Post{id=%s, title=%s, link=%s, description=%s, created=%s", id, title, link, description, created.format(formatter));
+        return String.format("%d, %s, %s, %s%n%s%n", id, created.format(formatter), title, link, description);
     }
 }
