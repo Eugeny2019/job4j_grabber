@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -58,7 +59,7 @@ public class PsqlStore implements Store {
         try (PreparedStatement statement = cnn.prepareStatement("select * from post order by id asc")) {
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
-                    posts.add(new Post(
+                    posts.add(makePost(
                                     resultSet.getInt("id"),
                                     resultSet.getString("name"),
                                     resultSet.getString("link"),
@@ -72,7 +73,7 @@ public class PsqlStore implements Store {
             e.printStackTrace();
         }
         if (posts.isEmpty()) {
-            posts.add(new Post(0, null, null, null, null));
+            posts.add(makePost(0, null, null, null, null));
         }
         return posts;
     }
@@ -86,14 +87,14 @@ public class PsqlStore implements Store {
             try (ResultSet resultSet = statement.executeQuery()) {
                 post = (resultSet.next())
                         ?
-                        new Post(
+                        makePost(
                                 resultSet.getInt("id"),
                                 resultSet.getString("name"),
                                 resultSet.getString("link"),
                                 resultSet.getString("text"),
                                 resultSet.getTimestamp("created").toLocalDateTime())
                         :
-                        new Post(0, null, null, null, null);
+                        makePost(0, null, null, null, null);
                 return post;
             }
         } catch (SQLException ex) {
@@ -112,5 +113,9 @@ public class PsqlStore implements Store {
     @Override
     public void init() throws SchedulerException {
 
+    }
+
+    private Post makePost(int id, String name, String link, String text, LocalDateTime created) {
+        return new Post( id, name, link, text, created);
     }
 }
