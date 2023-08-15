@@ -116,6 +116,6 @@ public class PsqlStore implements Store {
     }
 
     private Post makePost(int id, String name, String link, String text, LocalDateTime created) {
-        return new Post( id, name, link, text, created);
+        return new Post(id, name, link, text, created);
     }
 }
