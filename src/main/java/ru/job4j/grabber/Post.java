@@ -42,10 +42,6 @@ public class Post {
         return String.format("%d, %s, %s, %s%n%s%n", id, created.format(formatter), title, link, description);
     }
 
-    public int getId() {
-        return id;
-    }
-
     public String getTitle() {
         return title;
     }

@@ -7,7 +7,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.*;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -22,7 +21,7 @@ public class PsqlStore implements Store {
             throw new IllegalStateException(e);
         }
         try {
-            cnn = DriverManager.getConnection(cfg.getProperty("jdbc.url"));
+            cnn = DriverManager.getConnection(cfg.getProperty("jdbc.url"), cfg.getProperty("jdbc.username"), cfg.getProperty("jdbc.password"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -34,10 +33,10 @@ public class PsqlStore implements Store {
             config.load(in);
         }
         PsqlStore psqlStore = new PsqlStore(config);
-        Post post = new Post(1, "vacation", config.getProperty("url"), "cool vacation", new HabrCareerDateTimeParser().parse("2023-07-31T14:55:29+03:00"));
+        Post post = new Post(1, "vacation", "https://afdgdds.fds", "cool vacation", new HabrCareerDateTimeParser().parse("2023-07-31T14:55:29+03:00"));
         psqlStore.save(post);
         System.out.println(psqlStore.findById(1));
-        System.out.println(psqlStore.getAll());
+        psqlStore.getAll().forEach(System.out::println);
     }
 
     @Override
@@ -46,7 +45,8 @@ public class PsqlStore implements Store {
             statement.setString(1, post.getTitle());
             statement.setString(2, post.getDescription());
             statement.setString(3, post.getLink());
-            statement.setString(4, post.getCreated().format(DateTimeFormatter.ISO_ZONED_DATE_TIME));
+            statement.setTimestamp(4, Timestamp.valueOf(post.getCreated()));
+            statement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -59,35 +59,44 @@ public class PsqlStore implements Store {
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     posts.add(new Post(
-                            resultSet.getInt("id"),
-                            resultSet.getString("name"),
-                            resultSet.getString("link"),
-                            resultSet.getString("text"),
-                            resultSet.getTimestamp("created").toLocalDateTime())
+                                    resultSet.getInt("id"),
+                                    resultSet.getString("name"),
+                                    resultSet.getString("link"),
+                                    resultSet.getString("text"),
+                                    resultSet.getTimestamp("created").toLocalDateTime()
+                            )
                     );
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        if (posts.isEmpty()) {
+            posts.add(new Post(0, null, null, null, null));
+        }
         return posts;
     }
 
     @Override
     public Post findById(int id) {
-        try (PreparedStatement statement = cnn.prepareStatement("select * from items where id=? order by id asc")) {
+        Post post;
+        try (PreparedStatement statement = cnn.prepareStatement("select * from post where id=?")) {
             statement.setInt(1, id);
+            statement.execute();
             try (ResultSet resultSet = statement.executeQuery()) {
-                resultSet.next();
-                return new Post(
-                        resultSet.getInt("id"),
-                        resultSet.getString("name"),
-                        resultSet.getString("link"),
-                        resultSet.getString("text"),
-                        resultSet.getTimestamp("created").toLocalDateTime());
+                post = (resultSet.next()) ?
+                        new Post(
+                                resultSet.getInt("id"),
+                                resultSet.getString("name"),
+                                resultSet.getString("link"),
+                                resultSet.getString("text"),
+                                resultSet.getTimestamp("created").toLocalDateTime())
+                        :
+                        new Post(0, null, null, null, null);
+                return post;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
         throw new IllegalArgumentException();
     }
