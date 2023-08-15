@@ -84,7 +84,8 @@ public class PsqlStore implements Store {
             statement.setInt(1, id);
             statement.execute();
             try (ResultSet resultSet = statement.executeQuery()) {
-                post = (resultSet.next()) ?
+                post = (resultSet.next())
+                        ?
                         new Post(
                                 resultSet.getInt("id"),
                                 resultSet.getString("name"),
