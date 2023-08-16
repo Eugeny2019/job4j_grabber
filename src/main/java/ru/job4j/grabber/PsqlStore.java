@@ -54,52 +54,48 @@ public class PsqlStore implements Store {
 
     @Override
     public List<Post> getAll() {
-        List<Post> posts = new ArrayList<>();
         try (PreparedStatement statement = cnn.prepareStatement("select * from post order by id asc")) {
+            List<Post> posts = new ArrayList<>();
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
-                    posts.add(new Post(
-                                    resultSet.getInt("id"),
-                                    resultSet.getString("name"),
-                                    resultSet.getString("link"),
-                                    resultSet.getString("text"),
-                                    resultSet.getTimestamp("created").toLocalDateTime()
-                            )
-                    );
+                    posts.add(makePost(resultSet));
                 }
+                if (posts.isEmpty()) {
+                    posts.add(makePost(resultSet));
+                }
+                return posts;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        if (posts.isEmpty()) {
-            posts.add(new Post(0, null, null, null, null));
-        }
-        return posts;
+        throw new IllegalArgumentException();
     }
 
     @Override
     public Post findById(int id) {
-        Post post;
         try (PreparedStatement statement = cnn.prepareStatement("select * from post where id=?")) {
             statement.setInt(1, id);
             statement.execute();
             try (ResultSet resultSet = statement.executeQuery()) {
-                post = (resultSet.next())
-                        ?
-                        new Post(
-                                resultSet.getInt("id"),
-                                resultSet.getString("name"),
-                                resultSet.getString("link"),
-                                resultSet.getString("text"),
-                                resultSet.getTimestamp("created").toLocalDateTime())
-                        :
-                        new Post(0, null, null, null, null);
-                return post;
+                return makePost(resultSet);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         throw new IllegalArgumentException();
+    }
+
+    private Post makePost(ResultSet resultSet) throws SQLException {
+        return (resultSet.next())
+                ?
+                new Post(
+                        resultSet.getInt("id"),
+                        resultSet.getString("name"),
+                        resultSet.getString("link"),
+                        resultSet.getString("text"),
+                        resultSet.getTimestamp("created").toLocalDateTime())
+                :
+                new Post(0, null, null, null, null);
     }
 
     @Override
