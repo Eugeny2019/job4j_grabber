@@ -7,7 +7,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.quartz.SchedulerException;
 import ru.job4j.grabber.utils.DateTimeParser;
-import ru.job4j.grabber.utils.HabrCareerDateTimeParser;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -23,11 +22,6 @@ public class HabrCareerParse implements Parse {
 
     public HabrCareerParse(DateTimeParser dateTimeParser) {
         this.dateTimeParser = dateTimeParser;
-    }
-
-    public static void main(String[] args) {
-        HabrCareerParse habrCareerParse = new HabrCareerParse(new HabrCareerDateTimeParser());
-        habrCareerParse.list(PAGE_LINK).forEach(System.out::println);
     }
 
     public List<Post> getVacancies(Connection connection) throws IOException {
@@ -49,7 +43,6 @@ public class HabrCareerParse implements Parse {
             vacancyDescription = retrieveDescription(link);
 
             posts.add(new Post(vacancyId, vacancyName, link, vacancyDescription, vacancyLocalDateTime));
-//            System.out.printf("%s: %s %s%nDescription:%n%s%n", vacancyDatetime, vacancyName, link, vacancyDescription);
         });
         return posts;
     }
@@ -77,9 +70,12 @@ public class HabrCareerParse implements Parse {
 
     @Override
     public List<Post> list(String link) {
+        if (link == null || link.isBlank()) {
+            link = PAGE_LINK;
+        }
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_PAGES; i++) {
-            Connection connection = Jsoup.connect(PAGE_LINK + i);
+            Connection connection = Jsoup.connect(link + i);
             try {
                 posts.addAll(getVacancies(connection));
             } catch (IOException e) {

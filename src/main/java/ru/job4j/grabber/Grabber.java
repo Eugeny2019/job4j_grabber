@@ -4,7 +4,9 @@ import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import ru.job4j.grabber.utils.HabrCareerDateTimeParser;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 import static org.quartz.JobBuilder.newJob;
@@ -45,10 +47,33 @@ public class Grabber implements Grab {
     public static class GrabJob implements Job {
         @Override
         public void execute(JobExecutionContext context) {
+            System.out.println("execute launched");
             JobDataMap map = context.getJobDetail().getJobDataMap();
             Store store = (Store) map.get("store");
             Parse parse = (Parse) map.get("parse");
-            /* TODO impl logic */
+            parse.list("").forEach(store::save);
+            store.getAll().forEach(System.out::println);
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Properties config = new Properties();
+        try (InputStream in = new FileInputStream("src/main/resources/app.properties")) {
+            config.load(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Grabber grabber;
+        Scheduler scheduler = null;
+        try {
+            scheduler = StdSchedulerFactory.getDefaultScheduler();
+            grabber = new Grabber(new HabrCareerParse(new HabrCareerDateTimeParser()),
+                    new PsqlStore(config), scheduler, 120);
+            grabber.init();
+            Thread.sleep(250000);
+            scheduler.shutdown();
+        } catch (SchedulerException e) {
+            e.printStackTrace();
         }
     }
 }

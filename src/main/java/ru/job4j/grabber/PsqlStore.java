@@ -1,11 +1,7 @@
 package ru.job4j.grabber;
 
 import org.quartz.SchedulerException;
-import ru.job4j.grabber.utils.HabrCareerDateTimeParser;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,18 +21,6 @@ public class PsqlStore implements Store {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) throws IOException {
-        Properties config = new Properties();
-        try (InputStream in = new FileInputStream("src/main/resources/app.properties")) {
-            config.load(in);
-        }
-        PsqlStore psqlStore = new PsqlStore(config);
-        Post post = new Post(1, "vacation", "https://afdgdds.fds", "cool vacation", new HabrCareerDateTimeParser().parse("2023-07-31T14:55:29+03:00"));
-        psqlStore.save(post);
-        System.out.println(psqlStore.findById(1));
-        psqlStore.getAll().forEach(System.out::println);
     }
 
     @Override
