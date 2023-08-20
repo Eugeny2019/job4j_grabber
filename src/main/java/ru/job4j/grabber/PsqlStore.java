@@ -1,7 +1,5 @@
 package ru.job4j.grabber;
 
-import org.quartz.SchedulerException;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,10 +85,5 @@ public class PsqlStore implements Store {
         if (cnn != null) {
             cnn.close();
         }
-    }
-
-    @Override
-    public void init() throws SchedulerException {
-
     }
 }

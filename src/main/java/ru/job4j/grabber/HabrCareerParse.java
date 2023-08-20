@@ -5,7 +5,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.quartz.SchedulerException;
 import ru.job4j.grabber.utils.DateTimeParser;
 
 import java.io.IOException;
@@ -83,10 +82,5 @@ public class HabrCareerParse implements Parse {
             }
         }
         return posts;
-    }
-
-    @Override
-    public void init() throws SchedulerException {
-
     }
 }

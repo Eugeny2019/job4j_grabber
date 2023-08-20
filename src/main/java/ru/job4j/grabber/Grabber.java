@@ -4,8 +4,6 @@ import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import ru.job4j.grabber.utils.HabrCareerDateTimeParser;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
@@ -56,24 +54,17 @@ public class Grabber implements Grab {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        Properties config = new Properties();
-        try (InputStream in = new FileInputStream("src/main/resources/app.properties")) {
-            config.load(in);
-        } catch (IOException e) {
-            e.printStackTrace();
+    public static void main(String[] args) throws Exception {
+        var cfg = new Properties();
+        try (InputStream in = Grabber.class.getClassLoader()
+                .getResourceAsStream("app.properties")) {
+            cfg.load(in);
         }
-        Grabber grabber;
-        Scheduler scheduler = null;
-        try {
-            scheduler = StdSchedulerFactory.getDefaultScheduler();
-            grabber = new Grabber(new HabrCareerParse(new HabrCareerDateTimeParser()),
-                    new PsqlStore(config), scheduler, 120);
-            grabber.init();
-            Thread.sleep(250000);
-            scheduler.shutdown();
-        } catch (SchedulerException e) {
-            e.printStackTrace();
-        }
+        Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
+        scheduler.start();
+        var parse = new HabrCareerParse(new HabrCareerDateTimeParser());
+        var store = new PsqlStore(cfg);
+        var time = Integer.parseInt(cfg.getProperty("time"));
+        new Grabber(parse, store, scheduler, time).init();
     }
 }
